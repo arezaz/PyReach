@@ -2,6 +2,7 @@
 import Arm2DEnv as ae
 import numpy as np
 from arm_params import *
+from utils import plot_arm
 
 t = 0.8 # second
 tstep = round(0.8/dt)
@@ -51,7 +52,6 @@ plt.show()
 # %%
 
 
-
 lower = np.apply_along_axis(Joint2Hand, 1, np.array(X), 'lower','pos', 'vel')
 upper = np.apply_along_axis(Joint2Hand, 1, np.array(X), 'upper','pos', 'vel')
 
@@ -65,4 +65,7 @@ ax.plot(hand[:,0], hand[:,1],'r.')
 ax.axis('equal')
 ax.grid()
 
+# %%
+%matplotlib qt
+plot_arm(X)
 # %%

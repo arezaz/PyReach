@@ -1,6 +1,7 @@
 import numpy as np
 import math
 from arm_params import *
+import matplotlib.pyplot as plt
 
 # some helper functions
 def Jacobian(X):
@@ -66,3 +67,24 @@ def Joint2Hand(X, link = 'lower', *argv):
 
     return out
 
+
+def plot_arm(X):
+    hand = np.apply_along_axis(Joint2Hand, 1, np.array(X), 'lower','pos', 'vel')
+    # X: joint space states
+    plt.figure()
+    X = np.array(X)
+    for step in range(X.shape[0]):
+        lower = np.apply_along_axis(Joint2Hand, 1, np.array(X), 'lower','pos', 'vel')
+        upper = np.apply_along_axis(Joint2Hand, 1, np.array(X), 'upper','pos', 'vel')
+
+        plt.clf()
+        #Identfying Figure
+        plt.axes(xlim=(-.6, .6), ylim=(-0.05, .6))
+        
+        plt.plot([0,upper[step, 0]],[0,upper[step, 1]],'b')
+        plt.plot([upper[step, 0],lower[step, 0]],[upper[step, 1],lower[step, 1]],'k')
+        plt.plot(hand[:step,0], hand[:step,1],'r.')
+        plt.grid()
+        plt.gca().set_aspect('equal', adjustable='box')
+
+        plt.pause(dt)
