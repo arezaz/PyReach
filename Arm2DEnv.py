@@ -78,7 +78,6 @@ arm_cnstr = {
 
 # arm environment gym class
 class ArmModel:
-
     
     def __init__(self):
         # center of the workspace, initial position of the arm for experiments
@@ -96,6 +95,8 @@ class ArmModel:
             high = np.array([self.arm_cnstr['shoulder']['UB_U'], self.arm_cnstr['elbow']['UB_U']])
         )
         self.dt = dt
+        self.origin_hand = np.array([self.wsapce_center[0], self.wsapce_center[1]]) # initially set the origin to the center of the workspace
+        self.origin_joint = np.concatenate((Hand2Joint(self.origin_hand, 'pos'), 0.0, 0.0), axis=None)
 
     def set_target(self, position):
         # target position in hand space, assuming target velocity is always zero
@@ -103,7 +104,7 @@ class ArmModel:
         self.target_hand = np.array([position[0], position[1], 0.0, 0.0])
         # [q1 q2 q1d q2d]
         self.target_joint = np.concatenate((Hand2Joint(self.target_hand, 'pos'), 0.0, 0.0), axis=None)
-
+        
     def is_feasible(self, X, U):
         # making sure arm's constrains are met
         q1_feas = np.min(X[0]>=self.arm_cnstr['shoulder']['LB_X']) and np.min(X[0] <= self.arm_cnstr['shoulder']['UB_X'])
@@ -134,7 +135,7 @@ class ArmModel:
         c = self.cost(X,U)
         info = {}
         if done:
-            c = self.cost(np.array([self.wsapce_center[0], self.wsapce_center[1], 0.0, 0.0]), np.array([0.0, 0.0]))
+            c = self.cost(np.array([self.origin_hand[0], self.origin_hand[1], 0.0, 0.0]), np.array([0.0, 0.0]))
             return X,c,done,info
 
         res = itg.solve_ivp(self.ArmDynamics,(0,dt),X,args=(U,))
@@ -142,7 +143,7 @@ class ArmModel:
 
         done = not self.is_feasible(X_next,U)
         if done:
-            c = self.cost(np.array([self.wsapce_center[0], self.wsapce_center[1], 0.0, 0.0]), np.array([0.0, 0.0]))
+            c = self.cost(np.array([self.origin_hand[0], self.origin_hand[1], 0.0, 0.0]), np.array([0.0, 0.0]))
         return X_next,c,done,info
     
     def step(self,U):
@@ -150,15 +151,9 @@ class ArmModel:
         self.X = np.copy(X_next)
         return X_next,c,done,info
 
-    def reset(self):
-        self.X = Hand2Joint(np.array([self.wsapce_center[0], self.wsapce_center[1], 0.0, 0.0]), 'pos', 'vel')
+    def reset(self): # back to the predefined origin - could be the center of the workspace or any random point
+        self.X = Hand2Joint(np.array([self.origin_hand[0], self.origin_hand[1], 0.0, 0.0]), 'pos', 'vel')
         return np.copy(self.X)
-
-    
-
-
-
-
 
 
 #%%

@@ -79,7 +79,7 @@ def plot_arm(X):
 
         plt.clf()
         #Identfying Figure
-        plt.axes(xlim=(-.6, .6), ylim=(-0.05, .6))
+        plt.axes(xlim=(-.8, .8), ylim=(-0.05, .8))
         
         plt.plot([0,upper[step, 0]],[0,upper[step, 1]],'b')
         plt.plot([upper[step, 0],lower[step, 0]],[upper[step, 1],lower[step, 1]],'k')
