@@ -62,15 +62,15 @@ ArmDynamicsFun = cdi.Function('ArmDynamics',[X,U],[dX_dt])
 
 arm_cnstr = {
     'shoulder':{
-        'UB_U': 6.0,
-        'LB_U': -6.0,
+        'UB_U': 600.0,
+        'LB_U': -600.0,
         'UB_X': np.deg2rad(85),
         'LB_X': np.deg2rad(-60)
     },
 
     'elbow':{
-        'UB_U': 6.0,
-        'LB_U':-6.0,
+        'UB_U': 600.0,
+        'LB_U':-600.0,
         'UB_X': np.deg2rad(170),
         'LB_X': np.deg2rad(0)
     }

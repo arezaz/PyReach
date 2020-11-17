@@ -3,14 +3,15 @@ import Arm2DEnv as ae
 import numpy as np
 from arm_params import *
 from utils import plot_arm
+from imp_cntrl import imp_cntrl
 
 #%% arm dynamics and reward function
-t = 0.8 # second
-tstep = round(0.8/dt)
+t = 0.9 # second
+tstep = round(t/dt)
 
 env = ae.ArmModel()
 env.origin_hand = np.array([-0.0,  0.3])
-env.set_target(env.wsapce_center+np.array([0.1, 0]))
+env.set_target(np.array([-0.2,  0.4]))
 
 x0 = env.reset()
 
@@ -18,7 +19,7 @@ x = np.copy(x0)
 X = []
 C = []
 for step in range(tstep):
-    u = np.array([6, -6])
+    u = imp_cntrl(step*tstep, x, t, env)
     x_next,c,done,info = env.step(u)
     X.append(x)
     C.append(c)
@@ -29,6 +30,7 @@ for step in range(tstep):
         x = np.copy(x_next)
 
 #%% plot trajectory
+
 import matplotlib.pyplot as plt
 from utils import Joint2Hand
 
@@ -53,7 +55,7 @@ plt.grid()
 plt.show()
 
 # %% plot arm motion
-%matplotlib qt
-plot_arm(X)
+#%matplotlib qt
+plot_arm(X, env)
 
 # %%
