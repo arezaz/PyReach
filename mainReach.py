@@ -11,7 +11,7 @@ tstep = round(t/dt)
 
 env = ae.ArmModel()
 env.origin_hand = np.array([-0.0,  0.3])
-env.set_target(np.array([-0.2,  0.4]))
+env.set_target(np.array([-0.3,  0.4]))
 
 x0 = env.reset()
 
