@@ -19,7 +19,7 @@ x = np.copy(x0)
 X = []
 C = []
 for step in range(tstep):
-    u = imp_cntrl(step*tstep, x, t, env)
+    u = imp_cntrl(step*dt, x, t, env)
     x_next,c,done,info = env.step(u)
     X.append(x)
     C.append(c)
@@ -55,7 +55,7 @@ plt.grid()
 plt.show()
 
 # %% plot arm motion
-#%matplotlib qt
+%matplotlib qt
 plot_arm(X, env)
 
 # %%

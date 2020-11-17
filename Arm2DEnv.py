@@ -1,7 +1,6 @@
 
 #%%
 import numpy as np
-import casadi as cdi
 import torch
 import scipy.integrate as itg 
 import gym
@@ -21,38 +20,20 @@ from arm_params import *
 
 # state X: [q1, q2, q1d, q2d]
 # q1: shoulder, q2: elbow
-X = cdi.SX.sym('X', 4)
 
-# command U: joint torques
-U = cdi.SX.sym('U', 2)
+def ArmDynamicsFun(X, U):
+    dum1= m1*l1_c**2 + m2*l2_c**2 + m2*l1**2 + J1+J2
+    dum2= 2*m2*l2_c*l1
+    dum3= -m2*l1*l2_c*np.sin(X[1])
 
+    I = np.array([[dum1+dum2*np.cos(X[1]) , m2*l2_c**2+J2+0.5*dum2*np.cos(X[1])],
+                    [m2*l2_c**2+J2+0.5*dum2*np.cos(X[1]), m2*l2_c**2+J2]])
+    C = np.array([[dum3*X[3], dum3*(X[2]+X[3])],
+                    [-dum3*X[2],0]])
+    dum4 = np.linalg.inv(I)@(np.transpose(U - np.matmul(C, X[2:4])))
+    dX_dt = np.array([X[2], X[3], dum4[0], dum4[1]])
 
-q1 = X[0]
-q2 = X[1]
-q1d = X[2]
-q2d = X[3]
-s2 = cdi.sin(q2)
-c2 = cdi.cos(q2)
-
-# two-arm motion dynamic formulation
-# I(X)*d2X_dt2 + C(X, dX_dt)*d_X = U
-I11_a = m1*l1_c**2
-I11_b = l1**2 + l2_c**2 + 2*l1*l2_c*c2
-I11 = I11_a + m2*I11_b + J1 + J2
-I12 = m2*( l2_c**2 + l1*l2_c*c2 ) + J2
-I22 = m2*l2_c**2 + J2
-h = -m2*l1*l2_c*s2
-
-den = I11 - I12*I12/I22
-part = U[1] + h*q1d**2
-
-q1dd = ( U[0] - h*q2d**2 - 2*h*q1d*q2d - I12*part/I22 ) / den
-q2dd = ( U[1] + h*q1d**2 - I12*q1dd ) / I22
-
-dX_dt = cdi.vcat([q1d, q2d, q1dd, q2dd])
-
-# arm dynamics model
-ArmDynamicsFun = cdi.Function('ArmDynamics',[X,U],[dX_dt])
+    return dX_dt
 
 #%%
 # arm movement constraints :

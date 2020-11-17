@@ -67,6 +67,6 @@ def imp_cntrl(t, x, Tf, env):
     feedback = Kp@(x_desired[0:2] - x[0:2])+ Kd@(x_desired[2:4] - x[2:4])
     feedforward = C_d@x_desired[2:4] + I_d@x_desired[4:]
 
-    command = feedback + feedforward
+    command = feedforward + feedback
 
     return command
