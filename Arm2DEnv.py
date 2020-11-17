@@ -45,14 +45,14 @@ arm_cnstr = {
     'shoulder':{
         'UB_U': 600.0,
         'LB_U': -600.0,
-        'UB_X': np.deg2rad(85),
+        'UB_X': np.deg2rad(135),
         'LB_X': np.deg2rad(-60)
     },
 
     'elbow':{
         'UB_U': 600.0,
         'LB_U':-600.0,
-        'UB_X': np.deg2rad(170),
+        'UB_X': np.deg2rad(175),
         'LB_X': np.deg2rad(0)
     }
 }
@@ -65,9 +65,11 @@ class ArmModel:
         self.wsapce_center = np.array([-0.15, 0.30]) 
         # workspace: a [0.5x0.35] rectangle on the center
         self.wspace = gym.spaces.Box(
-            low = np.array([self.wsapce_center]) + np.array([-0.25, -0.1]),
-            high = np.array([self.wsapce_center]) + np.array([0.25, 0.25])
+            low = self.wsapce_center + np.array([-0.25, -0.1]),
+            high = self.wsapce_center + np.array([0.25, 0.25])
         )
+
+        self.observation_space = self.wspace
 
         # arm biophysical constraints
         self.arm_cnstr = arm_cnstr
@@ -76,7 +78,9 @@ class ArmModel:
             high = np.array([self.arm_cnstr['shoulder']['UB_U'], self.arm_cnstr['elbow']['UB_U']])
         )
         self.dt = dt
-        self.origin_hand = np.array([self.wsapce_center[0], self.wsapce_center[1]]) # initially set the origin to the center of the workspace
+
+    def set_origin(self, position):
+        self.origin_hand = np.array([position[0], position[1]]) # initially set the origin to the center of the workspace
         self.origin_joint = np.concatenate((Hand2Joint(self.origin_hand, 'pos'), 0.0, 0.0), axis=None)
 
     def set_target(self, position):
@@ -132,7 +136,13 @@ class ArmModel:
         self.X = np.copy(X_next)
         return X_next,c,done,info
 
-    def reset(self): # back to the predefined origin - could be the center of the workspace or any random point
+    def reset(self):
+        rand_origin = self.wsapce_center + 0.4*self.wspace.sample()
+        self.set_origin(rand_origin) 
+
+        rand_targ = self.wspace.sample()
+        self.set_target(rand_targ)
+
         self.X = Hand2Joint(np.array([self.origin_hand[0], self.origin_hand[1], 0.0, 0.0]), 'pos', 'vel')
         return np.copy(self.X)
 

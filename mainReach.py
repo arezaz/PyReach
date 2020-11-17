@@ -10,9 +10,6 @@ t = 0.9 # second
 tstep = round(t/dt)
 
 env = ae.ArmModel()
-env.origin_hand = np.array([-0.0,  0.3])
-env.set_target(np.array([-0.3,  0.4]))
-
 x0 = env.reset()
 
 x = np.copy(x0)
@@ -37,6 +34,9 @@ from utils import Joint2Hand
 hand = np.apply_along_axis(Joint2Hand, 1, np.array(X), 'lower','pos', 'vel')
 
 plt.plot(hand[:,0], hand[:,1],'k.')
+plt.plot(env.origin_hand[0], env.origin_hand[1], marker='o', markersize=10, color="red")
+plt.plot(env.target_hand[0], env.target_hand[1], marker='o', markersize=10, color="green")
+
 plt.axis('equal')
 plt.grid()
 plt.show()
@@ -55,7 +55,7 @@ plt.grid()
 plt.show()
 
 # %% plot arm motion
-%matplotlib qt
+#%matplotlib qt
 plot_arm(X, env)
 
 # %%

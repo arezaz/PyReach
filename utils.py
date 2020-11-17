@@ -84,8 +84,8 @@ def plot_arm(X, env):
         plt.plot(hand[:step,0], hand[:step,1],'r.')
         plt.plot([0,upper[step, 0]],[0,upper[step, 1]],'b')
         plt.plot([upper[step, 0],lower[step, 0]],[upper[step, 1],lower[step, 1]],'k')
-        plt.plot(env.origin_hand[0], env.origin_hand[1], marker='o', markersize=3, color="green")
-        plt.plot(env.target_hand[0], env.target_hand[1], marker='o', markersize=3, color="green")
+        plt.plot(env.origin_hand[0], env.origin_hand[1], marker='o', markersize=10, color="red")
+        plt.plot(env.target_hand[0], env.target_hand[1], marker='o', markersize=10, color="green")
 
         plt.grid()
         plt.gca().set_aspect('equal', adjustable='box')
