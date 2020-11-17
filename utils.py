@@ -68,10 +68,11 @@ def Joint2Hand(X, link = 'lower', *argv):
     return out
 
 
-def plot_arm(X):
+def plot_arm(X, env):
     hand = np.apply_along_axis(Joint2Hand, 1, np.array(X), 'lower','pos', 'vel')
     # X: joint space states
     plt.figure()
+
     X = np.array(X)
     for step in range(X.shape[0]):
         lower = np.apply_along_axis(Joint2Hand, 1, np.array(X), 'lower','pos', 'vel')
@@ -80,11 +81,13 @@ def plot_arm(X):
         plt.clf()
         #Identfying Figure
         plt.axes(xlim=(-.8, .8), ylim=(-0.05, .8))
-        
+        plt.plot(hand[:step,0], hand[:step,1],'r.')
         plt.plot([0,upper[step, 0]],[0,upper[step, 1]],'b')
         plt.plot([upper[step, 0],lower[step, 0]],[upper[step, 1],lower[step, 1]],'k')
-        plt.plot(hand[:step,0], hand[:step,1],'r.')
+        plt.plot(env.origin_hand[0], env.origin_hand[1], marker='o', markersize=3, color="green")
+        plt.plot(env.target_hand[0], env.target_hand[1], marker='o', markersize=3, color="green")
+
         plt.grid()
         plt.gca().set_aspect('equal', adjustable='box')
 
-        plt.pause(dt)
+        plt.pause(0.01*dt)
