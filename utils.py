@@ -67,8 +67,18 @@ def Joint2Hand(X, link = 'lower', *argv):
 
     return out
 
+def dist_from_straight(point, origin_hand, target_hand):
+    O_x, O_y = origin_hand[0], origin_hand[1]
+    T_x, T_y = target_hand[0], target_hand[1]
+    x0, y0 = point[0], point[1]
 
-def plot_arm(X, env):
+    den = np.sqrt((T_y-O_y)**2+(T_x-O_x)**2)
+    ratio = ((T_y - O_y)*x0 - (T_x - O_x)*y0 + T_x*O_y - T_y*O_x)/den
+    dist = np.abs(ratio)
+
+    return dist
+
+def plot_arm(X, env, motion = 'True'):
     hand = np.apply_along_axis(Joint2Hand, 1, np.array(X), 'lower','pos', 'vel')
     # X: joint space states
     plt.figure()
@@ -89,5 +99,5 @@ def plot_arm(X, env):
 
         plt.grid()
         plt.gca().set_aspect('equal', adjustable='box')
-
-        plt.pause(0.01*dt)
+        if motion == True:
+            plt.pause(0.01*dt)
