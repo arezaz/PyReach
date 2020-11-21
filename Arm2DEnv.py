@@ -155,7 +155,7 @@ class ArmModel(gym.Env):
         rand_origin = self.wsapce_center #0.2*self.wspace.sample()  #0.4*self.wspace.sample() #self.wsapce_center #+ 0.4*self.wspace.sample()
         self.set_origin(rand_origin) 
 
-        rand_targ = self.wsapce_center+np.array([0.1,0.1]) #rand_targ_circle(0.1) #0.9*self.wspace.sample() #
+        rand_targ = self.wsapce_center+rand_targ_circle(0.1) #np.array([0.1,0.1]) # #0.9*self.wspace.sample() #
         self.set_target(rand_targ)
 
         self.state = Hand2Joint(np.array([self.origin_hand[0], self.origin_hand[1], 0.0, 0.0]), 'pos', 'vel')

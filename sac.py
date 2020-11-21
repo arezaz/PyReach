@@ -1,16 +1,29 @@
-#%% train soft actor-critic
+#%% train sac
+import os
 import gym
 import numpy as np
 from stable_baselines import SAC
 from stable_baselines.sac.policies import MlpPolicy
 from stable_baselines.sac.policies import LnMlpPolicy
+from stable_baselines.common.noise import NormalActionNoise
+from stable_baselines.bench import Monitor
+from stable_baselines.common.callbacks import BaseCallback
 
 import Arm2DEnv as ae
-#%%
+from utils import SaveOnBestTrainingRewardCallback
+#%% sac
+
+log_dir = './sandbox/sac/'
+os.makedirs(log_dir, exist_ok=True)
+
 env = ae.ArmModel()
+env = Monitor(env, log_dir)
+
+
 model = SAC(LnMlpPolicy, env, buffer_size=int(5E5), batch_size=128, gamma=0.98, learning_rate = 0.001, tau = 0.01, verbose=1)
-model.learn(total_timesteps=int(3E6), log_interval=10)
+
+callback = SaveOnBestTrainingRewardCallback(check_freq=int(5E4), log_dir=log_dir)
+model.learn(total_timesteps=int(3E6), log_interval=10, callback=callback)
 
 # %%
-model.save("twolink-arm")
-
+model.save("twolink_arm_sac")
