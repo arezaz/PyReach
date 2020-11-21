@@ -6,8 +6,10 @@ from utils import plot_arm
 from imp_cntrl import imp_cntrl
 
 #%% load controler
-from stable_baselines import SAC
-cntrl = SAC.load("twolink-arm")
+from stable_baselines import SAC, DDPG
+#cntrl = SAC.load("twolink-arm-sac")
+cntrl = DDPG.load("twolink-arm-ddpg")
+
 
 #%% arm dynamics and reward function
 t = 0.9 # second
@@ -20,7 +22,7 @@ x = np.copy(x0)
 X = []
 C = []
 for step in range(tstep):
-    u = cntrl.predict(x)[0] #imp_cntrl(step*dt, x, t, env) #
+    u = imp_cntrl(step*dt, x, t, env) #cntrl.predict(x)[0] #
     x_next,c,done,info = env.step(u)
     X.append(x)
     C.append(c)
@@ -59,7 +61,7 @@ plt.grid()
 plt.show()
 
 # %% plot arm motion
-%matplotlib qt
+#%matplotlib qt
 plot_arm(X, env, True)
 
 # %%

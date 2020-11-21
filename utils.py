@@ -78,6 +78,10 @@ def dist_from_straight(point, origin_hand, target_hand):
 
     return dist
 
+def rand_targ_circle(r):
+    theta = np.random.rand() * 2 * np.pi
+    return np.array([np.cos(theta) * r, np.sin(theta) * r])
+
 def plot_arm(X, env, motion = 'True'):
     hand = np.apply_along_axis(Joint2Hand, 1, np.array(X), 'lower','pos', 'vel')
     # X: joint space states
