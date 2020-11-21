@@ -73,7 +73,7 @@ class ArmModel(gym.Env):
     def is_feasible(self, X, U):
         # making sure arm's constrains are met
         q1_feas = X[0]>=self.arm_cnstr['shoulder']['LB_X'] and X[0] <= self.arm_cnstr['shoulder']['UB_X']
-        q2_feas = X[1]>=self.arm_cnstr['elbow']['LB_X'] and X[1] <= self.arm_cnstr['elbow']['UB_X'])
+        q2_feas = X[1]>=self.arm_cnstr['elbow']['LB_X'] and X[1] <= self.arm_cnstr['elbow']['UB_X']
 
         u1_feas = U[0]>=self.arm_cnstr['shoulder']['LB_U'] and U[0] <= self.arm_cnstr['shoulder']['UB_U']
         u2_feas = U[1]>=self.arm_cnstr['elbow']['LB_U'] and U[1] <= self.arm_cnstr['elbow']['UB_U']
