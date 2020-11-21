@@ -22,7 +22,7 @@ x = np.copy(x0)
 X = []
 C = []
 for step in range(tstep):
-    u = imp_cntrl(step*dt, x, t, env) #cntrl.predict(x)[0] #
+    u = cntrl.predict(x)[0] #imp_cntrl(step*dt, x, t, env) #
     x_next,c,done,info = env.step(u)
     X.append(x)
     C.append(c)
