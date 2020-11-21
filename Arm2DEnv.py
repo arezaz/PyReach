@@ -128,6 +128,7 @@ class ArmModel(gym.Env):
             reward += -dist
         else:
             reward += 1
+            self.flag_done = True
 
         return reward
 
@@ -145,11 +146,11 @@ class ArmModel(gym.Env):
         done = not self.is_feasible(X_next,U)
         if done:
             c = -1
-        done = self.flag_done
+        done = done or self.flag_done
         return X_next,c,done,info
     
     def step(self,U):
-        X_next,c,done,info = self.step_from_state(self.X,U)
+        X_next,c,done,info = self.step_from_state(self.state,U)
         self.state = np.copy(X_next)
         return X_next,c,done,info
 
