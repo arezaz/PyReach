@@ -83,7 +83,8 @@ class ArmModel(gym.Env):
         self.dt = dt
         self.metadata = {'render.modes': []}
         self.flag_done = False
-
+        self.state = None
+        
     def set_origin(self, position):
         self.origin_hand = np.array([position[0], position[1]]) # initially set the origin to the center of the workspace
         self.origin_joint = np.concatenate((Hand2Joint(self.origin_hand, 'pos'), 0.0, 0.0), axis=None)
@@ -149,7 +150,7 @@ class ArmModel(gym.Env):
     
     def step(self,U):
         X_next,c,done,info = self.step_from_state(self.X,U)
-        self.X = np.copy(X_next)
+        self.state = np.copy(X_next)
         return X_next,c,done,info
 
     def reset(self):
@@ -161,8 +162,8 @@ class ArmModel(gym.Env):
         rand_targ = self.wsapce_center+rand_targ_circle(0.1) #0.9*self.wspace.sample() #
         self.set_target(rand_targ)
 
-        self.X = Hand2Joint(np.array([self.origin_hand[0], self.origin_hand[1], 0.0, 0.0]), 'pos', 'vel')
-        return np.copy(self.X)
+        self.state = Hand2Joint(np.array([self.origin_hand[0], self.origin_hand[1], 0.0, 0.0]), 'pos', 'vel')
+        return np.copy(self.state)
 
 
 #%%
