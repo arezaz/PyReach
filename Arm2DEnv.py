@@ -57,7 +57,8 @@ class ArmModel(gym.Env):
         self.metadata = {'render.modes': []}
         self.flag_done = False
         self.state = None
-        
+        self.iter = 0
+
     def set_origin(self, position):
         self.origin_hand = np.array([position[0], position[1]]) # initially set the origin to the center of the workspace
         self.origin_joint = np.concatenate((Hand2Joint(self.origin_hand, 'pos'), 0.0, 0.0), axis=None)
@@ -71,11 +72,11 @@ class ArmModel(gym.Env):
         
     def is_feasible(self, X, U):
         # making sure arm's constrains are met
-        q1_feas = np.min(X[0]>=self.arm_cnstr['shoulder']['LB_X']) and np.min(X[0] <= self.arm_cnstr['shoulder']['UB_X'])
-        q2_feas = np.min(X[1]>=self.arm_cnstr['elbow']['LB_X']) and np.min(X[1] <= self.arm_cnstr['elbow']['UB_X'])
+        q1_feas = X[0]>=self.arm_cnstr['shoulder']['LB_X'] and X[0] <= self.arm_cnstr['shoulder']['UB_X']
+        q2_feas = X[1]>=self.arm_cnstr['elbow']['LB_X'] and X[1] <= self.arm_cnstr['elbow']['UB_X'])
 
-        u1_feas = np.min(U[0]>=self.arm_cnstr['shoulder']['LB_U']) and np.min(U[0] <= self.arm_cnstr['shoulder']['UB_U'])
-        u2_feas = np.min(U[1]>=self.arm_cnstr['elbow']['LB_U']) and np.min(U[1] <= self.arm_cnstr['elbow']['UB_U'])
+        u1_feas = U[0]>=self.arm_cnstr['shoulder']['LB_U'] and U[0] <= self.arm_cnstr['shoulder']['UB_U']
+        u2_feas = U[1]>=self.arm_cnstr['elbow']['LB_U'] and U[1] <= self.arm_cnstr['elbow']['UB_U']
 
         return q1_feas and q2_feas and u1_feas and u2_feas
 
@@ -91,7 +92,7 @@ class ArmModel(gym.Env):
         X_t_joint = self.target_joint
 
         reward = 0
-        eps = 0.005
+        eps = 0.005 + 0.01/(self.iter+1)**0.2 # shrink the epsilon circle while iterating timesteps
         lmbd = 0.5
         dist_p = np.linalg.norm((X_hand[:2]-X_t_hand[:2]), ord=2) # position
         dist_o = np.linalg.norm((X_joint[:2]-X_t_joint[:2]), ord=2) # orientation
@@ -125,10 +126,12 @@ class ArmModel(gym.Env):
     def step(self,U):
         X_next,c,done,info = self.step_from_state(self.state,U)
         self.state = np.copy(X_next)
+        self.iter += 1
         return X_next,c,done,info
 
     def reset(self):
         self.flag_done = False
+        self.iter = 0
 
         rand_origin = self.wsapce_center #0.2*self.wspace.sample()  #0.4*self.wspace.sample() #self.wsapce_center #+ 0.4*self.wspace.sample()
         self.set_origin(rand_origin) 
