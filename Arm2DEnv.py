@@ -44,19 +44,31 @@ class ArmModel(gym.Env):
             high = self.wsapce_center + np.array([0.15, 0.15])
         )
 
+
+        _joint_high = np.array([self.arm_cnstr['shoulder']['LB_X'], self.arm_cnstr['elbow']['LB_X']])
+        _joint_low = np.array([self.arm_cnstr['shoulder']['UB_X'], self.arm_cnstr['elbow']['UB_X']])
+        _joint_vel_thresh = np.array([10.]*2)
+        _hand_vel_thresh = np.array([1.]*2)
+        _loc_high = np.concatenate(([self.wspace.high.max()], [self.wspace.high.max()]))
+        _loc_low = np.concatenate(([self.wspace.high.min()], [self.wspace.high.min()]))
+
         self.observation_space = gym.spaces.Box(
-            low = np.array([self.arm_cnstr['shoulder']['LB_X'], self.arm_cnstr['elbow']['LB_X'], -10.0, -10.0]),
-            high = np.array([self.arm_cnstr['shoulder']['UB_X'], self.arm_cnstr['elbow']['UB_X'], +10.0, +10.0])
+            low = np.concatenate((_joint_low, -1*_joint_vel_thresh, _loc_low, -1*_hand_vel_thresh, _loc_low, _loc_low, [0.])),
+            high = np.concatenate((_joint_high, +1*_joint_vel_thresh, _loc_high, +1*_hand_vel_thresh, _loc_high, _loc_high, [1.])),
+            dtype=np.float32
         )
 
         self.action_space = gym.spaces.Box(
             low  = np.array([self.arm_cnstr['shoulder']['LB_U'], self.arm_cnstr['elbow']['LB_U']]),
             high = np.array([self.arm_cnstr['shoulder']['UB_U'], self.arm_cnstr['elbow']['UB_U']])
         )
+
         self.dt = dt
         self.metadata = {'render.modes': []}
-        self.flag_done = False
+        self.flag_reached = False
         self.state = None
+        self.VISION = None
+        self.obs = None
         self.iter = 0
 
     def set_origin(self, position):
@@ -102,35 +114,42 @@ class ArmModel(gym.Env):
             reward += -dist
         else:
             reward += 1
-            self.flag_done = True
+            self.flag_reached = True
 
         return reward
 
-    def step_from_state(self,X,U):
-        done = not self.is_feasible(X,U)
-        c = self.cost(X,U)
+    def step_from_state(self,state,U):
+        done = not self.is_feasible(state,U)
+        c = self.cost(state,U)
         info = {}
         if done:
             c = -1 
-            return X,c,done,info
+            return state,c,done,info
 
-        res = itg.solve_ivp(self.ArmDynamics,(0,dt),X,args=(U,))
-        X_next = res.y[:,-1]
+        res = itg.solve_ivp(self.ArmDynamics,(0,dt),state,args=(U,))
+        state_next = res.y[:,-1]
 
-        done = not self.is_feasible(X_next,U)
+        done = not self.is_feasible(state_next,U)
         if done:
             c = -1
-        done = done or self.flag_done
-        return X_next,c,done,info
+        done = done or self.flag_reached
+        return state_next,c,done,info
     
     def step(self,U):
-        X_next,c,done,info = self.step_from_state(self.state,U)
-        self.state = np.copy(X_next)
+        # obs: [states(q1, q2, q1d, q2d), (hand_x, hand_y, hand_xd, handyd)], goal_x, goal_y, reached_goal
+        self.state = self.obs[0:4] # q1, q2, q1d, q2d
+        state_next,c,done,info = self.step_from_state(self.state,U)
+
+        self.state = np.copy(state_next)
+        self.VISION = np.concatenate((self.state, Joint2Hand(state_next, 'lower', 'pos', 'vel')))
+        self.obs = np.concatenate((self.VISION, self.target_hand[0:2], self.origin_hand, [1. if self.flag_reached else 0.]))
+
+        obs_next = np.copy(self.obs)
         self.iter += 1
-        return X_next,c,done,info
+        return obs_next,c,done,info
 
     def reset(self):
-        self.flag_done = False
+        self.flag_reached = False
         self.iter = 0
 
         rand_origin = self.wsapce_center #0.2*self.wspace.sample()  #0.4*self.wspace.sample() #self.wsapce_center #+ 0.4*self.wspace.sample()
@@ -140,6 +159,9 @@ class ArmModel(gym.Env):
         self.set_target(rand_targ)
 
         self.state = Hand2Joint(np.array([self.origin_hand[0], self.origin_hand[1], 0.0, 0.0]), 'pos', 'vel')
-        return np.copy(self.state)
+        self.VISION = np.concatenate((self.state, Joint2Hand(self.state, 'lower', 'pos', 'vel')))
+        self.obs = np.concatenate((self.VISION, self.target_hand[0:2], self.origin_hand, [1. if self.flag_reached else 0.]))
+        
+        return np.copy(self.obs)
 
 #%%

@@ -8,7 +8,7 @@ from imp_cntrl import imp_cntrl
 #%% load controler
 from stable_baselines import SAC, DDPG
 #cntrl = SAC.load("twolink-arm-sac")
-cntrl = DDPG.load("./sandbox/ddpg/best_model.zip")
+#cntrl = DDPG.load("./sandbox/ddpg/best_model.zip")
 
 
 #%% arm dynamics and reward function
@@ -22,7 +22,7 @@ x = np.copy(x0)
 X = []
 C = []
 for step in range(tstep):
-    u = cntrl.predict(x)[0] #imp_cntrl(step*dt, x, t, env) #
+    u = imp_cntrl(step*dt, x, t, env) #cntrl.predict(x)[0] #
     x_next,c,done,info = env.step(u)
     X.append(x)
     C.append(c)
