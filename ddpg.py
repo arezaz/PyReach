@@ -24,7 +24,7 @@ action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=float(0.1) * np
 
 model = DDPG(LnMlpPolicy, env, verbose=1, gamma=0.98, tau=0.01,
              actor_lr=0.0001, critic_lr=0.001, action_noise=action_noise,
-             buffer_size=int(5E6), batch_size=128, random_exploration=0.01)
+             buffer_size=int(5E6), batch_size=128, random_exploration=0.001)
 
 callback = SaveOnBestTrainingRewardCallback(check_freq=int(5E4), log_dir=log_dir)
 

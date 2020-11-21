@@ -16,15 +16,15 @@ from arm_params import *
 
 arm_cnstr = {
     'shoulder':{
-        'UB_U': 10.0,
-        'LB_U': -10.0,
+        'UB_U': 50.0,
+        'LB_U': -50.0,
         'UB_X': np.deg2rad(135),
         'LB_X': np.deg2rad(-60)
     },
 
     'elbow':{
-        'UB_U': 10.0,
-        'LB_U':-10.0,
+        'UB_U': 50.0,
+        'LB_U':-50.0,
         'UB_X': np.deg2rad(175),
         'LB_X': np.deg2rad(0)
     }
@@ -104,7 +104,7 @@ class ArmModel(gym.Env):
         X_t_joint = self.target_joint
 
         reward = 0
-        eps = 0.005 + 0.01/(self.iter+1)**0.2 # shrink the epsilon circle while iterating timesteps
+        eps = 0.005 + 0.05/(self.iter+1)**0.8 # shrink the epsilon circle while iterating timesteps
         lmbd = 0.5
         dist_p = np.linalg.norm((X_hand[:2]-X_t_hand[:2]), ord=2) # position
         dist_o = np.linalg.norm((X_joint[:2]-X_t_joint[:2]), ord=2) # orientation
@@ -123,7 +123,7 @@ class ArmModel(gym.Env):
         c = self.cost(state,U)
         info = {}
         if done:
-            c = -1 
+            c = -5 
             return state,c,done,info
 
         res = itg.solve_ivp(self.ArmDynamics,(0,dt),state,args=(U,))
@@ -131,7 +131,7 @@ class ArmModel(gym.Env):
 
         done = not self.is_feasible(state_next,U)
         if done:
-            c = -1
+            c = -5
         done = done or self.flag_reached
         return state_next,c,done,info
     
