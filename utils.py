@@ -7,6 +7,8 @@ from stable_baselines.common.callbacks import BaseCallback
 from stable_baselines.results_plotter import load_results, ts2xy
 
 # some helper functions
+
+## jacobian and jacobian derivative
 def Jacobian(X):
     # jacobian matrix of two-link arm
     # X: [q1, q2, q1d, q2d]
@@ -21,6 +23,7 @@ def Jacobian_dot(X):
                         [-l1*(X[2])*np.sin(X[0])-l2*(X[2]+X[3])*np.sin(X[0]+X[1]),
                         -l2*(X[2]+X[3])*np.sin(X[0]+X[1])]])
 
+## mapping hand coordinate to joint coordinate
 def Hand2Joint(X, *argv):
     # X: [x, y, xd, yd, xdd, ydd]
     # argv: 'pos', 'vel', 'acc'
@@ -47,6 +50,7 @@ def Hand2Joint(X, *argv):
 
     return out
 
+## mapping hand joint coordinate to hand coordinate 
 def Joint2Hand(X, link = 'lower', *argv):
     # X: [q1, q2, q1d, q2d]
     # argv: 'pos', 'vel'
@@ -70,6 +74,7 @@ def Joint2Hand(X, link = 'lower', *argv):
 
     return out
 
+## compute distance of a point from straight line
 def dist_from_straight(point, origin_hand, target_hand):
     O_x, O_y = origin_hand[0], origin_hand[1]
     T_x, T_y = target_hand[0], target_hand[1]
@@ -81,10 +86,12 @@ def dist_from_straight(point, origin_hand, target_hand):
 
     return dist
 
+## generate random target points on a circle
 def rand_targ_circle(r):
     theta = np.random.rand() * 2 * np.pi
     return np.array([np.cos(theta) * r, np.sin(theta) * r])
 
+## visualize arm's motion
 def plot_arm(X, env, motion = 'True'):
     hand = np.apply_along_axis(Joint2Hand, 1, np.array(X), 'lower','pos', 'vel')
     # X: joint space states
@@ -110,6 +117,7 @@ def plot_arm(X, env, motion = 'True'):
             plt.pause(0.01*dt)
 
 
+## save rl algorithms training logs
 class SaveOnBestTrainingRewardCallback(BaseCallback):
     """
     Callback for saving a model (the check is done every ``check_freq`` steps)

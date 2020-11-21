@@ -1,4 +1,4 @@
-#%% train soft actor-critic
+#%% train ddpg
 import os
 import gym
 import numpy as np
