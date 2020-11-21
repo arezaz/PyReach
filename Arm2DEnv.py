@@ -14,17 +14,19 @@ from arm_params import *
 # During Daily Activities – Toward a 7 DOF
 # Upper Limb Powered Exoskeleton 
 
+_torque_thres = 25
+
 arm_cnstr = {
     'shoulder':{
-        'UB_U': 50.0,
-        'LB_U': -50.0,
+        'UB_U': 1*_torque_thres,
+        'LB_U': -1*_torque_thres,
         'UB_X': np.deg2rad(135),
         'LB_X': np.deg2rad(-60)
     },
 
     'elbow':{
-        'UB_U': 50.0,
-        'LB_U':-50.0,
+        'UB_U': 1*_torque_thres,
+        'LB_U': -1*_torque_thres,
         'UB_X': np.deg2rad(175),
         'LB_X': np.deg2rad(0)
     }
@@ -104,7 +106,7 @@ class ArmModel(gym.Env):
         X_t_joint = self.target_joint
 
         reward = 0
-        eps = 0.005 + 0.05/(self.iter+1)**0.8 # shrink the epsilon circle while iterating timesteps
+        eps = 0.005 + 0.05/(self.iter+1)**0.8 #**0.8 # shrink the epsilon circle while iterating timesteps
         lmbd = 0.5
         dist_p = np.linalg.norm((X_hand[:2]-X_t_hand[:2]), ord=2) # position
         dist_o = np.linalg.norm((X_joint[:2]-X_t_joint[:2]), ord=2) # orientation

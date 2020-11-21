@@ -187,3 +187,25 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
                   self.model.save(self.save_path)
 
         return True
+
+
+import shutil
+import os
+from datetime import datetime
+
+def snap_code(target_dir):
+    source_dir = './'        
+    file_names = os.listdir(source_dir)
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M")
+    
+    target_dir = os.path.join(target_dir, timestamp)
+    os.makedirs(target_dir, exist_ok=True)
+
+    target_dir_snap = os.path.join(target_dir, 'snapshot')
+    os.makedirs(target_dir_snap, exist_ok=True)    
+
+    for file_name in file_names:
+        if file_name.endswith('.py') or file_name .endswith('.ipynb'):
+            shutil.copy(os.path.join(source_dir, file_name), target_dir_snap)
+
+    return target_dir

@@ -10,11 +10,14 @@ from stable_baselines.bench import Monitor
 from stable_baselines.common.callbacks import BaseCallback
 
 import Arm2DEnv as ae
-from utils import SaveOnBestTrainingRewardCallback
+from utils import SaveOnBestTrainingRewardCallback, snap_code
 #%% sac
 
-log_dir = './sandbox/ddpg/'
-os.makedirs(log_dir, exist_ok=True)
+log_dir_root = './sandbox/ddpg/'
+os.makedirs(log_dir_root, exist_ok=True)
+
+# create a snapshot of code
+log_dir = snap_code(log_dir_root)
 
 env = ae.ArmModel()
 env = Monitor(env, log_dir)

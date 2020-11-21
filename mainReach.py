@@ -8,7 +8,7 @@ from imp_cntrl import imp_cntrl
 #%% load controler
 from stable_baselines import SAC, DDPG
 #cntrl = SAC.load("twolink-arm-sac")
-cntrl = DDPG.load("./sandbox/ddpg/best_model.zip")
+cntrl = DDPG.load("./sandbox/ddpg/20201121-1420/best_model.zip")
 
 
 #%% arm dynamics and reward function
@@ -40,6 +40,7 @@ from utils import Joint2Hand
 hand = np.apply_along_axis(Joint2Hand, 1, np.array(X), 'lower','pos', 'vel')
 
 plt.plot(hand[:,0], hand[:,1],'k.')
+plt.plot(hand[:,0], hand[:,1],'k')
 plt.plot(env.origin_hand[0], env.origin_hand[1], marker='o', markersize=10, color="red")
 plt.plot(env.target_hand[0], env.target_hand[1], marker='o', markersize=10, color="green")
 
