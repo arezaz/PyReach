@@ -5,35 +5,8 @@ import torch
 import scipy.integrate as itg 
 import gym
 
-from utils import Jacobian, Jacobian_dot, Hand2Joint, Joint2Hand, dist_from_straight, rand_targ_circle
+from utils import ArmDynamicsFun, Jacobian, Jacobian_dot, Hand2Joint, Joint2Hand, dist_from_straight, rand_targ_circle
 from arm_params import *
-
-#%%
-
-# equations of motion for a two link manipulator
-#            X_dot = f(t, X, u)
-# where X is the state vector of joint coordinates
-#
-# X(1), X(2) = joint angles
-# X(3), X(4) = 1st derivatives of joint angles
-# and U is the joint toruques
-
-# state X: [q1, q2, q1d, q2d]
-# q1: shoulder, q2: elbow
-
-def ArmDynamicsFun(X, U):
-    dum1= m1*l1_c**2 + m2*l2_c**2 + m2*l1**2 + J1+J2
-    dum2= 2*m2*l2_c*l1
-    dum3= -m2*l1*l2_c*np.sin(X[1])
-
-    I = np.array([[dum1+dum2*np.cos(X[1]) , m2*l2_c**2+J2+0.5*dum2*np.cos(X[1])],
-                    [m2*l2_c**2+J2+0.5*dum2*np.cos(X[1]), m2*l2_c**2+J2]])
-    C = np.array([[dum3*X[3], dum3*(X[2]+X[3])],
-                    [-dum3*X[2],0]])
-    dum4 = np.linalg.inv(I)@(np.transpose(U - np.matmul(C, X[2:4])))
-    dX_dt = np.array([X[2], X[3], dum4[0], dum4[1]])
-
-    return dX_dt
 
 #%%
 # arm movement constraints :
@@ -165,6 +138,5 @@ class ArmModel(gym.Env):
 
         self.state = Hand2Joint(np.array([self.origin_hand[0], self.origin_hand[1], 0.0, 0.0]), 'pos', 'vel')
         return np.copy(self.state)
-
 
 #%%
