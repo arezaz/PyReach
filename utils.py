@@ -117,6 +117,10 @@ def rand_targ_circle(r):
     theta = np.random.rand() * 2 * np.pi
     return np.array([np.cos(theta) * r, np.sin(theta) * r])
 
+## generate target points on a circle given theta
+def targ_circle(r, theta):
+    return np.array([np.cos(theta) * r, np.sin(theta) * r])
+
 ## visualize arm's motion
 def plot_arm(X, env, motion = 'True'):
     hand = np.apply_along_axis(Joint2Hand, 1, np.array(X), 'lower','pos', 'vel')
@@ -134,8 +138,8 @@ def plot_arm(X, env, motion = 'True'):
         plt.plot(hand[:step,0], hand[:step,1],'r.')
         plt.plot([0,upper[step, 0]],[0,upper[step, 1]],'b')
         plt.plot([upper[step, 0],lower[step, 0]],[upper[step, 1],lower[step, 1]],'k')
-        plt.plot(env.origin_hand[0], env.origin_hand[1], marker='o', markersize=10, color="red")
-        plt.plot(env.target_hand[0], env.target_hand[1], marker='o', markersize=10, color="green")
+        plt.plot(env.origin_hand[0], env.origin_hand[1], marker='o', markersize=5, color="red")
+        plt.plot(env.target_hand[0], env.target_hand[1], marker='o', markersize=5, color="green")
 
         plt.grid()
         plt.gca().set_aspect('equal', adjustable='box')
@@ -189,6 +193,41 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
         return True
 
 
+## moving average to plot noisy returns
+def moving_average(values, window):
+    """
+    Smooth values by doing a moving average
+    :param values: (numpy array)
+    :param window: (int)
+    :return: (numpy array)
+    """
+    weights = np.repeat(1.0, window) / window
+    return np.convolve(values, weights, 'valid')
+
+
+## plot noisy returns using moving average
+def plot_returns(log_folder, title='Learning Curve'):
+    """
+    plot the results
+
+    :param log_folder: (str) the save location of the results to plot
+    :param title: (str) the title of the task to plot
+    """
+    x, y = ts2xy(load_results(log_folder), 'timesteps')
+    y = moving_average(y, window=50)
+    # Truncate x
+    x = x[len(x) - len(y):]
+
+    fig = plt.figure(title)
+    plt.plot(x, y)
+    plt.xlabel('Number of Timesteps')
+    plt.ylabel('Rewards')
+    plt.title(title + " Smoothed")
+    plt.grid()
+    plt.show()
+
+
+## create snapshots of the code for reproductability
 import shutil
 import os
 from datetime import datetime
