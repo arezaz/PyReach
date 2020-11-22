@@ -122,7 +122,7 @@ def targ_circle(r, theta):
     return np.array([np.cos(theta) * r, np.sin(theta) * r])
 
 ## visualize arm's motion
-def plot_arm(X, env, motion = 'True'):
+def plot_arm(X, env, animate = 'True'):
     hand = np.apply_along_axis(Joint2Hand, 1, np.array(X), 'lower','pos', 'vel')
     # X: joint space states
     plt.figure()
@@ -143,7 +143,7 @@ def plot_arm(X, env, motion = 'True'):
 
         plt.grid()
         plt.gca().set_aspect('equal', adjustable='box')
-        if motion == True:
+        if animate == True:
             plt.pause(0.01*dt)
 
 
