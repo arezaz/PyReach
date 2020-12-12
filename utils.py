@@ -121,6 +121,35 @@ def rand_targ_circle(r):
 def targ_circle(r, theta):
     return np.array([np.cos(theta) * r, np.sin(theta) * r])
 
+## generate random fibonacci samples  
+def fibonacci_samples(nb_samples, center=np.array([-0.15, 0.30]),
+                      ws_high=np.array([-0.15, 0.30])+np.array([0.15, 0.15]), ws_low=np.array([-0.15, 0.30])+np.array([-0.15, -0.0])):
+    shift = 1.0
+    alpha=1
+
+    radius = np.linalg.norm(ws_high-center)
+
+    ga = np.pi * (3.0 - np.sqrt(5.0))
+    # Boundary points
+    np_boundary = round(alpha * np.sqrt(nb_samples))
+    
+    ss = np.zeros((nb_samples,2))
+    j = 0
+    for i in range(nb_samples):
+        if i > nb_samples - (np_boundary + 1):
+            r = 1.0
+        else:
+            r = np.sqrt((i + 0.5) / (nb_samples - 0.5 * (np_boundary + 1)))
+        phi   = ga * (i + shift)
+        ss[j,:] = np.array([r * np.cos(phi), r * np.sin(phi)])
+        j += 1
+
+    ss = radius * ss # scale
+    ss = ss + center # add offset
+    ss = ss[(ss[:,0]<ws_high[0]) & (ss[:,0]>ws_low[0]) & (ss[:,1]<ws_high[1]) & (ss[:,1]>ws_low[1])] # trim points out of the workspace
+
+    return ss
+
 ## visualize arm's motion
 def plot_arm(X, env, animate = 'True'):
     hand = np.apply_along_axis(Joint2Hand, 1, np.array(X), 'lower','pos', 'vel')

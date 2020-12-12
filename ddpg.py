@@ -20,6 +20,7 @@ os.makedirs(log_dir_root, exist_ok=True)
 log_dir = snap_code(log_dir_root)
 
 env = ae.ArmModel()
+env.mode = 'train'
 env = Monitor(env, log_dir)
 
 n_actions = env.action_space.shape[-1]
@@ -31,7 +32,7 @@ model = DDPG(LnMlpPolicy, env, verbose=1, gamma=0.98, tau=0.01,
 
 callback = SaveOnBestTrainingRewardCallback(check_freq=int(5E4), log_dir=log_dir)
 
-model.learn(total_timesteps=int(5E6), callback=callback)#(total_timesteps=int(4E5))
+model.learn(total_timesteps=int(6E6), callback=callback)#(total_timesteps=int(4E5))
 
 # %%
 model.save("twolink_arm_ddpg")

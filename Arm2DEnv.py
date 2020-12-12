@@ -5,7 +5,7 @@ import torch
 import scipy.integrate as itg 
 import gym
 
-from utils import ArmDynamicsFun, Jacobian, Jacobian_dot, Hand2Joint, Joint2Hand, dist_from_straight, rand_targ_circle
+from utils import ArmDynamicsFun, Jacobian, Jacobian_dot, Hand2Joint, Joint2Hand, dist_from_straight, rand_targ_circle, fibonacci_samples
 from arm_params import *
 
 #%%
@@ -41,11 +41,17 @@ class ArmModel(gym.Env):
         # center of the workspace, initial position of the arm for experiments
         self.wsapce_center = np.array([-0.15, 0.30]) 
         # workspace: a [0.5x0.35] rectangle on the center
-        self.wspace = gym.spaces.Box(
-            low = self.wsapce_center + np.array([-0.15, -0.0]),
-            high = self.wsapce_center + np.array([0.15, 0.15])
-        )
+        _ws_low = self.wsapce_center + np.array([-0.15, -0.0])
+        _ws_high = self.wsapce_center + np.array([0.15, 0.15])
 
+        self.wspace = gym.spaces.Box(
+            low = _ws_low,
+            high = _ws_high
+        )
+        # equidistant random points that covers workspace about the 
+        self.fibo_ws = fibonacci_samples(nb_samples=500, center=self.wsapce_center, ws_high=_ws_high, ws_low=_ws_low)
+
+        self.mode = 'train' # 'train' or 'eval'
 
         _joint_high = np.array([self.arm_cnstr['shoulder']['LB_X'], self.arm_cnstr['elbow']['LB_X']])
         _joint_low = np.array([self.arm_cnstr['shoulder']['UB_X'], self.arm_cnstr['elbow']['UB_X']])
@@ -153,12 +159,20 @@ class ArmModel(gym.Env):
     def reset(self):
         self.flag_reached = False
         self.iter = 0
+        
+        # target random around ws center:
+        #rand_origin = self.wsapce_center
+        #self.set_origin(rand_origin)
+        #rand_targ = self.wsapce_center+rand_targ_circle(0.1) # random target about the center of the workspace
+        #self.set_target(rand_targ)
 
-        rand_origin = self.wsapce_center #0.2*self.wspace.sample()  #0.4*self.wspace.sample() #self.wsapce_center #+ 0.4*self.wspace.sample()
-        self.set_origin(rand_origin) 
-
-        rand_targ = self.wsapce_center+rand_targ_circle(0.1) #np.array([0.1,0.1]) # #0.9*self.wspace.sample() #
-        self.set_target(rand_targ)
+        # fibonacci start and end position:
+        if self.mode == 'train':
+            origin_idx, targ_idx = np.random.choice(self.fibo_ws.shape[0], 2, replace = False)
+            rand_origin = self.fibo_ws[origin_idx,:]
+            self.set_origin(rand_origin)
+            rand_targ = self.fibo_ws[targ_idx,:] # random target about the center of the workspace
+            self.set_target(rand_targ)
 
         self.state = Hand2Joint(np.array([self.origin_hand[0], self.origin_hand[1], 0.0, 0.0]), 'pos', 'vel')
         self.VISION = np.concatenate((self.state, Joint2Hand(self.state, 'lower', 'pos', 'vel')))
