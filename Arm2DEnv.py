@@ -189,9 +189,9 @@ class ArmModel(gym.Env):
                 _rampup = _numcalls/_cur_1_call
                 _origin = self.wsapce_center+ np.random.uniform(-0.01*_rampup, 0.01*_rampup)
                 self.set_origin(_origin)
-                _theta = (_numcalls%8)*np.pi/4 + np.random.uniform(-0.1*_rampup, +0.1*_rampup) #np.random.randint(8)*np.pi/4 + np.random.uniform(-0.1*_rampup, +0.1*_rampup)
+                _theta = np.random.randint(8)*np.pi/4 + np.random.uniform(-0.1*_rampup, +0.1*_rampup) #(_numcalls%8)*np.pi/4 + np.random.uniform(-0.1*_rampup, +0.1*_rampup) #
                 _targ_r = 0.1 + np.random.uniform(-0.02*_rampup, 0.02*_rampup)
-                self.set_target(targ_circle(_targ_r, _theta))
+                self.set_target(_origin + targ_circle(_targ_r, _theta))
 
             elif self._numcalls <= _cur_2_call:
                 self.FF = 15
@@ -199,19 +199,19 @@ class ArmModel(gym.Env):
                 _rampup = (_numcalls-_cur_1_call)/(_cur_2_call-_cur_1_call)
                 _origin = self.wsapce_center+ np.random.uniform(-0.01*_rampup, 0.01*_rampup)
                 self.set_origin(_origin)
-                _theta = (_numcalls%8)*np.pi/4 + np.random.uniform(-0.1*_rampup, +0.1*_rampup) #np.random.randint(8)*np.pi/4 + np.random.uniform(-0.1*_rampup, +0.1*_rampup)
+                _theta = np.random.randint(8)*np.pi/4 + np.random.uniform(-0.1*_rampup, +0.1*_rampup) #(_numcalls%8)*np.pi/4 + np.random.uniform(-0.1*_rampup, +0.1*_rampup) #
                 _targ_r = 0.1 + np.random.uniform(-0.02*_rampup, 0.02*_rampup)
-                self.set_target(targ_circle(_targ_r, _theta))
+                self.set_target(_origin + targ_circle(_targ_r, _theta))
 
-            elif self._numcalls <= _cur_3_call:
+            elif self._numcalls > _cur_2_call:
                 self.FF = 0
                 # Cur-3: Washout
                 _rampup = (_numcalls-_cur_2_call)/(_cur_3_call-_cur_2_call)
                 _origin = self.wsapce_center+ np.random.uniform(-0.01*_rampup, 0.01*_rampup)
                 self.set_origin(_origin)
-                _theta = (_numcalls%8)*np.pi/4 + np.random.uniform(-0.1*_rampup, +0.1*_rampup) #np.random.randint(8)*np.pi/4 + np.random.uniform(-0.1*_rampup, +0.1*_rampup)
+                _theta = np.random.randint(8)*np.pi/4 + np.random.uniform(-0.1*_rampup, +0.1*_rampup) #(_numcalls%8)*np.pi/4 + np.random.uniform(-0.1*_rampup, +0.1*_rampup) #
                 _targ_r = 0.1 + np.random.uniform(-0.02*_rampup, 0.02*_rampup)
-                self.set_target(targ_circle(_targ_r, _theta))
+                self.set_target(_origin + targ_circle(_targ_r, _theta))
 
         self.state = Hand2Joint(np.array([self.origin_hand[0], self.origin_hand[1], 0.0, 0.0]), 'pos', 'vel')
         self.VISION = np.concatenate((self.state, Joint2Hand(self.state, 'lower', 'pos', 'vel')))
