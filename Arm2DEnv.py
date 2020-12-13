@@ -49,7 +49,7 @@ class ArmModel(gym.Env):
             high = _ws_high
         )
         # equidistant random points that covers workspace about the 
-        self.fibo_ws = fibonacci_samples(nb_samples=500, center=self.wsapce_center, ws_high=_ws_high, ws_low=_ws_low)
+        self.fibo_ws = fibonacci_samples(nb_samples=100, center=self.wsapce_center, ws_high=_ws_high, ws_low=_ws_low)
 
         self.mode = 'train' # 'train' or 'eval'
 
