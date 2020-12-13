@@ -5,7 +5,7 @@ import torch
 import scipy.integrate as itg 
 import gym
 
-from utils import ArmDynamicsFun, Jacobian, Jacobian_dot, Hand2Joint, Joint2Hand, dist_from_straight, rand_targ_circle, fibonacci_samples
+from utils import ArmDynamicsFun, Jacobian, Jacobian_dot, Hand2Joint, Joint2Hand, dist_from_straight, rand_targ_circle, targ_circle, fibonacci_samples
 from arm_params import *
 
 #%%
@@ -77,7 +77,9 @@ class ArmModel(gym.Env):
         self.state = None
         self.VISION = None
         self.obs = None
+        self.FF = 0
         self.iter = 0
+        self._numcalls = 0
 
     def set_origin(self, position):
         self.origin_hand = np.array([position[0], position[1]]) # initially set the origin to the center of the workspace
@@ -101,7 +103,7 @@ class ArmModel(gym.Env):
         return q1_feas and q2_feas and u1_feas and u2_feas
 
     def ArmDynamics(self,t,X,U):
-        dX_dt = np.array(ArmDynamicsFun(X,U)).squeeze()
+        dX_dt = np.array(ArmDynamicsFun(X,U,self.FF)).squeeze()
         return dX_dt
 
     def cost(self, X_joint, U):
@@ -159,6 +161,7 @@ class ArmModel(gym.Env):
     def reset(self):
         self.flag_reached = False
         self.iter = 0
+        self._numcalls = self._numcalls + 1 # keeping track of call numbers for curriculum learning
         
         # target random around ws center:
         #rand_origin = self.wsapce_center
@@ -167,12 +170,48 @@ class ArmModel(gym.Env):
         #self.set_target(rand_targ)
 
         # fibonacci start and end position:
-        if self.mode == 'train':
+        if self.mode == 'train_fibo_ranc':
             origin_idx, targ_idx = np.random.choice(self.fibo_ws.shape[0], 2, replace = False)
             rand_origin = self.fibo_ws[origin_idx,:]
             self.set_origin(rand_origin)
             rand_targ = self.fibo_ws[targ_idx,:] # random target about the center of the workspace
             self.set_target(rand_targ)
+
+        if self.mode == 'train_curriculum':
+            _numcalls = self._numcalls
+            _cur_1_call = self.curriculum[0]
+            _cur_2_call = self.curriculum[1]
+            _cur_3_call = self.curriculum[2]
+
+            if _numcalls <= _cur_1_call:
+                self.FF = 0
+                # Cur-1: Baseline
+                _rampup = _numcalls/_cur_1_call
+                _origin = self.wsapce_center+ np.random.uniform(-0.01*_rampup, 0.01*_rampup)
+                self.set_origin(_origin)
+                _theta = (_numcalls%8)*np.pi/4 + np.random.uniform(-0.1*_rampup, +0.1*_rampup) #np.random.randint(8)*np.pi/4 + np.random.uniform(-0.1*_rampup, +0.1*_rampup)
+                _targ_r = 0.1 + np.random.uniform(-0.02*_rampup, 0.02*_rampup)
+                self.set_target(targ_circle(_targ_r, _theta))
+
+            elif self._numcalls <= _cur_2_call:
+                self.FF = 15
+                # Cur-1: FF 
+                _rampup = (_numcalls-_cur_1_call)/(_cur_2_call-_cur_1_call)
+                _origin = self.wsapce_center+ np.random.uniform(-0.01*_rampup, 0.01*_rampup)
+                self.set_origin(_origin)
+                _theta = (_numcalls%8)*np.pi/4 + np.random.uniform(-0.1*_rampup, +0.1*_rampup) #np.random.randint(8)*np.pi/4 + np.random.uniform(-0.1*_rampup, +0.1*_rampup)
+                _targ_r = 0.1 + np.random.uniform(-0.02*_rampup, 0.02*_rampup)
+                self.set_target(targ_circle(_targ_r, _theta))
+
+            elif self._numcalls <= _cur_3_call:
+                self.FF = 0
+                # Cur-3: Washout
+                _rampup = (_numcalls-_cur_2_call)/(_cur_3_call-_cur_2_call)
+                _origin = self.wsapce_center+ np.random.uniform(-0.01*_rampup, 0.01*_rampup)
+                self.set_origin(_origin)
+                _theta = (_numcalls%8)*np.pi/4 + np.random.uniform(-0.1*_rampup, +0.1*_rampup) #np.random.randint(8)*np.pi/4 + np.random.uniform(-0.1*_rampup, +0.1*_rampup)
+                _targ_r = 0.1 + np.random.uniform(-0.02*_rampup, 0.02*_rampup)
+                self.set_target(targ_circle(_targ_r, _theta))
 
         self.state = Hand2Joint(np.array([self.origin_hand[0], self.origin_hand[1], 0.0, 0.0]), 'pos', 'vel')
         self.VISION = np.concatenate((self.state, Joint2Hand(self.state, 'lower', 'pos', 'vel')))

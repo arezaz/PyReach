@@ -19,7 +19,7 @@ from stable_baselines.results_plotter import load_results, ts2xy
 # state X: [q1, q2, q1d, q2d]
 # q1: shoulder, q2: elbow
 
-def ArmDynamicsFun(X, U):
+def ArmDynamicsFun(X, U, FF):
     dum1= m1*l1_c**2 + m2*l2_c**2 + m2*l1**2 + J1+J2
     dum2= 2*m2*l2_c*l1
     dum3= -m2*l1*l2_c*np.sin(X[1])
@@ -28,7 +28,13 @@ def ArmDynamicsFun(X, U):
                     [m2*l2_c**2+J2+0.5*dum2*np.cos(X[1]), m2*l2_c**2+J2]])
     C = np.array([[dum3*X[3], dum3*(X[2]+X[3])],
                     [-dum3*X[2],0]])
-    dum4 = np.linalg.inv(I)@(np.transpose(U - np.matmul(C, X[2:4])))
+    if FF == 0:
+        dum4 = np.linalg.inv(I)@(np.transpose(U - np.matmul(C, X[2:4])))
+    else:
+        Jacob = Jacobian(X)
+        U_FF = np.matmul(Jacob.transpose(), np.matmul(FF*Curl, np.matmul(Jacob, np.array([[X[2]],[X[3]]]))))
+        dum4 = np.linalg.inv(I)@(np.transpose(U + U_FF.transpose() - np.matmul(C, X[2:4])))
+
     dX_dt = np.array([X[2], X[3], dum4[0], dum4[1]])
 
     return dX_dt
@@ -187,12 +193,13 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
       It must contains the file created by the ``Monitor`` wrapper.
     :param verbose: (int)
     """
-    def __init__(self, check_freq: int, log_dir: str, verbose=1):
+    def __init__(self, check_freq: int, log_dir: str, check_points=[], verbose=1):
         super(SaveOnBestTrainingRewardCallback, self).__init__(verbose)
         self.check_freq = check_freq
         self.log_dir = log_dir
         self.save_path = os.path.join(log_dir, 'best_model')
         self.best_mean_reward = -np.inf
+        self.check_points=check_points
 
     def _init_callback(self) -> None:
         # Create folder if needed
@@ -203,21 +210,40 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
         if self.n_calls % self.check_freq == 0:
 
           # Retrieve training reward
-          x, y = ts2xy(load_results(self.log_dir), 'timesteps')
-          if len(x) > 0:
+            x, y = ts2xy(load_results(self.log_dir), 'timesteps')
+            if len(x) > 0:
               # Mean training reward over the last 100 episodes
-              mean_reward = np.mean(y[-100:])
-              if self.verbose > 0:
-                print("Num timesteps: {}".format(self.num_timesteps))
-                print("Best mean reward: {:.2f} - Last mean reward per episode: {:.2f}".format(self.best_mean_reward, mean_reward))
+                mean_reward = np.mean(y[-100:])
+                if self.verbose > 0:
+                    print("Num timesteps: {}".format(self.num_timesteps))
+                    print("Best mean reward: {:.2f} - Last mean reward per episode: {:.2f}".format(self.best_mean_reward, mean_reward))
 
               # New best model, you could save the agent here
-              if mean_reward > self.best_mean_reward:
-                  self.best_mean_reward = mean_reward
-                  # Example for saving best model
-                  if self.verbose > 0:
-                    print("Saving new best model to {}".format(self.save_path))
-                  self.model.save(self.save_path)
+                if mean_reward > self.best_mean_reward:
+                    self.best_mean_reward = mean_reward
+                    # Example for saving best model
+                    if self.verbose > 0:
+                        print("Saving new best model to {}".format(self.save_path))
+                        self.model.save(self.save_path)
+
+        if self.n_calls in self.check_points:
+            self.save_path_cp = os.path.join(self.log_dir, 'best_model', 'checkpoint_'+str(self.n_calls))
+            os.makedirs(self.save_path_cp, exist_ok=True)
+
+          # Retrieve training reward
+            x, y = ts2xy(load_results(self.log_dir), 'timesteps')
+            if len(x) > 0:
+              # Mean training reward over the last 100 episodes
+                mean_reward = np.mean(y[-100:])
+                if self.verbose > 0:
+                    print("Checkpoint at timestep: {}".format(self.num_timesteps))
+
+              # New best model, you could save the agent here
+                self.best_mean_reward = mean_reward
+                # Example for saving best model
+                if self.verbose > 0:
+                    print("Saving checkpoint model to {}".format(self.save_path_cp))
+                self.model.save(self.save_path_cp)
 
         return True
 
