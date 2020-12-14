@@ -3,7 +3,7 @@ from utils import Hand2Joint, Jacobian
 from arm_params import *
 
 def min_Jerk(t, tf, env, d):
-    Xo, Xf = env.origin_hand[:2], env.target_hand[:2]
+    Xo, Xf = env.origin_hand[:2], env.target_hand[:2] #env.RotMat@(env.target_hand[:2]-env.origin_hand[:2])+env.origin_hand[:2]
     to = 0
     T = (t-to)/(tf-to)
     tfo = tf - to

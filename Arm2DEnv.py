@@ -77,7 +77,10 @@ class ArmModel(gym.Env):
         self.state = None
         self.VISION = None
         self.obs = None
+
         self.FF = 0
+        self.Rot = 0
+
         self.iter = 0
         self._numcalls = 0
 
@@ -131,10 +134,9 @@ class ArmModel(gym.Env):
     def step_from_state(self,state,U):
         done = not self.is_feasible(state,U)
         c = self.cost(state,U)
-        info = {}
         if done:
             c = -5 
-            return state,c,done,info
+            return state,c,done
 
         res = itg.solve_ivp(self.ArmDynamics,(0,dt),state,args=(U,))
         state_next = res.y[:,-1]
@@ -143,16 +145,29 @@ class ArmModel(gym.Env):
         if done:
             c = -5
         done = done or self.flag_reached
-        return state_next,c,done,info
+        return state_next,c,done
     
     def step(self,U):
         # obs: [states(q1, q2, q1d, q2d), (hand_x, hand_y, hand_xd, handyd)], goal_x, goal_y, reached_goal
         #self.state = self.obs[0:4] # q1, q2, q1d, q2d
-        state_next,c,done,info = self.step_from_state(self.state,U)
-
+        info={}
+        state_next,c,done = self.step_from_state(self.state,U)
         self.state = np.copy(state_next)
-        self.VISION = np.concatenate((self.state, Joint2Hand(state_next, 'lower', 'pos', 'vel')))
-        self.obs = np.concatenate((self.VISION, self.target_hand[0:2], self.origin_hand, [1. if self.flag_reached else 0.]))
+        info['state'] = Joint2Hand(state_next, 'lower', 'pos', 'vel')
+
+        _Origin = self.origin_hand
+        _Targ = self.target_hand[0:2]
+
+        if self.Rot!=0:
+            _center = np.array([_Origin[0], _Origin[1], 0.0, 0.0])
+            _Hand = self.RotMat_stacked@(Joint2Hand(state_next, 'lower', 'pos', 'vel')-_center)+_center
+            _Joint = Hand2Joint(_Hand, 'pos', 'vel')
+        else:
+            _Hand = Joint2Hand(state_next, 'lower', 'pos', 'vel')
+            _Joint = state_next 
+        
+        self.VISION = np.concatenate((_Joint, _Hand))
+        self.obs = np.concatenate((self.VISION, _Targ, _Origin, [1. if self.flag_reached else 0.]))
 
         obs_next = np.copy(self.obs)
         self.iter += 1
@@ -184,7 +199,7 @@ class ArmModel(gym.Env):
             _cur_3_call = self.curriculum[2]
 
             if _numcalls <= _cur_1_call:
-                self.FF = 0
+                self.Rot = 0
                 # Cur-1: Baseline
                 _rampup = _numcalls/_cur_1_call
                 _origin = self.wsapce_center+ np.random.uniform(-0.01*_rampup, 0.01*_rampup)
@@ -194,8 +209,8 @@ class ArmModel(gym.Env):
                 self.set_target(_origin + targ_circle(_targ_r, _theta))
 
             elif self._numcalls <= _cur_2_call:
-                self.FF = 15
-                # Cur-1: FF 
+                self.Rot = np.deg2rad(30)
+                # Cur-1: purturb 
                 _rampup = (_numcalls-_cur_1_call)/(_cur_2_call-_cur_1_call)
                 _origin = self.wsapce_center+ np.random.uniform(-0.01*_rampup, 0.01*_rampup)
                 self.set_origin(_origin)
@@ -204,7 +219,7 @@ class ArmModel(gym.Env):
                 self.set_target(_origin + targ_circle(_targ_r, _theta))
 
             elif self._numcalls > _cur_2_call:
-                self.FF = 0
+                self.Rot = 0
                 # Cur-3: Washout
                 _rampup = (_numcalls-_cur_2_call)/(_cur_3_call-_cur_2_call)
                 _origin = self.wsapce_center+ np.random.uniform(-0.01*_rampup, 0.01*_rampup)
@@ -213,9 +228,17 @@ class ArmModel(gym.Env):
                 _targ_r = 0.1 + np.random.uniform(-0.02*_rampup, 0.02*_rampup)
                 self.set_target(_origin + targ_circle(_targ_r, _theta))
 
-        self.state = Hand2Joint(np.array([self.origin_hand[0], self.origin_hand[1], 0.0, 0.0]), 'pos', 'vel')
+        _RotMat = np.array([[np.cos(self.Rot), -np.sin(self.Rot)], [np.sin(self.Rot), np.cos(self.Rot)]])
+        self.RotMat = _RotMat
+        self.RotMat_stacked = np.block([[_RotMat, np.zeros_like(_RotMat)], [np.zeros_like(_RotMat), _RotMat]])
+
+        _Origin = self.origin_hand
+        _Targ = self.target_hand[0:2]
+
+        self.state = Hand2Joint(np.array([_Origin[0], _Origin[1], 0.0, 0.0]), 'pos', 'vel')
         self.VISION = np.concatenate((self.state, Joint2Hand(self.state, 'lower', 'pos', 'vel')))
-        self.obs = np.concatenate((self.VISION, self.target_hand[0:2], self.origin_hand, [1. if self.flag_reached else 0.]))
+
+        self.obs = np.concatenate((self.VISION, _Targ, _Origin, [1. if self.flag_reached else 0.]))
         
         return np.copy(self.obs)
 
