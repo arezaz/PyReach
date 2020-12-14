@@ -117,16 +117,19 @@ class ArmModel(gym.Env):
         X_t_joint = self.target_joint
 
         reward = 0
-        eps = 0.005 + 0.05/(self.iter+1)**0.8 #**0.8 # shrink the epsilon circle while iterating timesteps
+        eps = 0.005 + 0.05/(self.iter+1)**0.8 # shrink the epsilon circle while iterating timesteps
         lmbd = 0.5
         dist_p = np.linalg.norm((X_hand[:2]-X_t_hand[:2]), ord=2) # position
         dist_o = np.linalg.norm((X_joint[:2]-X_t_joint[:2]), ord=2) # orientation
         dist = lmbd*dist_p + (1-lmbd)*dist_o
 
-        if dist_p > eps and dist_o > eps:
+        _reach_time = 0.9
+        if dist_p > eps: # and dist_o > eps:
             reward += -dist
+            #reward = reward-0.1*(self.iter*dt)
         else:
             reward += 1
+            #reward = reward if self.iter*dt <=_reach_time else reward-0.1*(self.iter*dt-_reach_time)
             self.flag_reached = True
 
         return reward

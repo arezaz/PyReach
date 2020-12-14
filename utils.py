@@ -226,8 +226,8 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
                         print("Saving new best model to {}".format(self.save_path))
                         self.model.save(self.save_path)
 
-        if self.n_calls in self.check_points:
-            self.save_path_cp = os.path.join(self.log_dir, 'best_model', 'checkpoint_'+str(self.n_calls))
+        if self.n_calls in list(self.check_points.keys()):
+            self.save_path_cp = os.path.join(self.log_dir, 'best_model', 'checkpoint_'+str(self.n_calls)+'_'+str(self.check_points[self.n_calls]))
             os.makedirs(self.save_path_cp, exist_ok=True)
 
           # Retrieve training reward
