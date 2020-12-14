@@ -77,7 +77,10 @@ class ArmModel(gym.Env):
         self.state = None
         self.VISION = None
         self.obs = None
+
         self.FF = 0
+        self.Rot = 0
+
         self.iter = 0
         self._numcalls = 0
 
@@ -147,11 +150,20 @@ class ArmModel(gym.Env):
     
     def step(self,U):
         # obs: [states(q1, q2, q1d, q2d), (hand_x, hand_y, hand_xd, handyd)], goal_x, goal_y, reached_goal
-        self.state = self.obs[0:4] # q1, q2, q1d, q2d
+        #self.state = self.obs[0:4] # q1, q2, q1d, q2d
         state_next,c,done,info = self.step_from_state(self.state,U)
 
         self.state = np.copy(state_next)
-        self.VISION = np.concatenate((self.state, Joint2Hand(state_next, 'lower', 'pos', 'vel')))
+        
+        if self.Rot!=0:
+            RotMat = np.array([[np.cos(self.Rot), -np.sin(self.Rot)], [np.sin(self.Rot), np.cos(self.Rot)]])
+            Rot_Hand = np.block([[RotMat, np.zeros_like(RotMat)], [np.zeros_like(RotMat), RotMat]])@Joint2Hand(state_next, 'lower', 'pos', 'vel')
+            Rot_Joint = Hand2Joint(Rot_Hand, 'pos', 'vel')
+        else:
+            Rot_Hand = Joint2Hand(state_next, 'lower', 'pos', 'vel')
+            Rot_Joint = state_next          
+        
+        self.VISION = np.concatenate((Rot_Joint, Rot_Hand))
         self.obs = np.concatenate((self.VISION, self.target_hand[0:2], self.origin_hand, [1. if self.flag_reached else 0.]))
 
         obs_next = np.copy(self.obs)
