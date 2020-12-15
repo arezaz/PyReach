@@ -20,7 +20,7 @@ os.makedirs(log_dir_root, exist_ok=True)
 log_dir = snap_code(log_dir_root)
 
 env = ae.ArmModel()
-env.mode = 'train_curriculum'
+env.mode = 'train_curriculum_circle'
 env.curriculum = [1.5E6, 3E6, 4.5E6]
 env = Monitor(env, log_dir)
 

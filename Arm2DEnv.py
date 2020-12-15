@@ -124,13 +124,13 @@ class ArmModel(gym.Env):
         dist = lmbd*dist_p + (1-lmbd)*dist_o
 
         _reach_time = 0.9
-        if dist_p > eps: # and dist_o > eps:
+        if dist_p > eps and dist_o > eps:
             reward += -dist
-            #reward = reward-0.1*(self.iter*dt)
         else:
             reward += 1
-            #reward = reward if self.iter*dt <=_reach_time else reward-0.1*(self.iter*dt-_reach_time)
             self.flag_reached = True
+
+        reward = reward-0.1*(self.iter*dt)
 
         return reward
 
@@ -195,7 +195,7 @@ class ArmModel(gym.Env):
             rand_targ = self.fibo_ws[targ_idx,:] # random target about the center of the workspace
             self.set_target(rand_targ)
 
-        if self.mode == 'train_curriculum':
+        if self.mode == 'train_curriculum_rand':
             _numcalls = self._numcalls
             _cur_1_call = self.curriculum[0]
             _cur_2_call = self.curriculum[1]
@@ -205,32 +205,57 @@ class ArmModel(gym.Env):
                 self.Rot = 0
                 # Cur-1: Baseline
                 _rampup = _numcalls/_cur_1_call
-                _origin = self.wsapce_center #+ np.random.uniform(-0.01*_rampup, 0.01*_rampup)
+                _origin = self.wsapce_center + np.random.uniform(-0.01*_rampup, 0.01*_rampup)
                 self.set_origin(_origin)
-                _theta = np.random.randint(8)*np.pi/4 #+ np.random.uniform(-0.1*_rampup, +0.1*_rampup) #(_numcalls%8)*np.pi/4 + np.random.uniform(-0.1*_rampup, +0.1*_rampup) #
-                _targ_r = 0.1 #+ np.random.uniform(-0.02*_rampup, 0.02*_rampup)
+                _theta = np.random.randint(8)*np.pi/4 + np.random.uniform(-0.1*_rampup, +0.1*_rampup) #(_numcalls%8)*np.pi/4 + np.random.uniform(-0.1*_rampup, +0.1*_rampup) #
+                _targ_r = 0.1 + np.random.uniform(-0.02*_rampup, 0.02*_rampup)
                 self.set_target(_origin + targ_circle(_targ_r, _theta))
 
             elif self._numcalls <= _cur_2_call:
                 self.Rot = np.deg2rad(30)
                 # Cur-1: purturb 
                 _rampup = (_numcalls-_cur_1_call)/(_cur_2_call-_cur_1_call)
-                _origin = self.wsapce_center #+ np.random.uniform(-0.01*_rampup, 0.01*_rampup)
+                _origin = self.wsapce_center + np.random.uniform(-0.01*_rampup, 0.01*_rampup)
                 self.set_origin(_origin)
                 _theta = np.random.randint(8)*np.pi/4 + np.random.uniform(-0.1*_rampup, +0.1*_rampup) #(_numcalls%8)*np.pi/4 + np.random.uniform(-0.1*_rampup, +0.1*_rampup) #
-                _targ_r = 0.1 #+ np.random.uniform(-0.02*_rampup, 0.02*_rampup)
+                _targ_r = 0.1 + np.random.uniform(-0.02*_rampup, 0.02*_rampup)
                 self.set_target(_origin + targ_circle(_targ_r, _theta))
 
             elif self._numcalls > _cur_2_call:
                 self.Rot = 0
                 # Cur-3: Washout
                 _rampup = (_numcalls-_cur_2_call)/(_cur_3_call-_cur_2_call)
-                _origin = self.wsapce_center #+ np.random.uniform(-0.01*_rampup, 0.01*_rampup)
+                _origin = self.wsapce_center + np.random.uniform(-0.01*_rampup, 0.01*_rampup)
                 self.set_origin(_origin)
-                _theta = np.random.randint(8)*np.pi/4 #+ np.random.uniform(-0.1*_rampup, +0.1*_rampup) #(_numcalls%8)*np.pi/4 + np.random.uniform(-0.1*_rampup, +0.1*_rampup) #
-                _targ_r = 0.1 #+ np.random.uniform(-0.02*_rampup, 0.02*_rampup)
+                _theta = np.random.randint(8)*np.pi/4 + np.random.uniform(-0.1*_rampup, +0.1*_rampup) #(_numcalls%8)*np.pi/4 + np.random.uniform(-0.1*_rampup, +0.1*_rampup) #
+                _targ_r = 0.1 + np.random.uniform(-0.02*_rampup, 0.02*_rampup)
                 self.set_target(_origin + targ_circle(_targ_r, _theta))
 
+        if self.mode == 'train_curriculum_circle':
+            _numcalls = self._numcalls
+            _cur_1_call = self.curriculum[0]
+            _cur_2_call = self.curriculum[1]
+            _cur_3_call = self.curriculum[2]
+
+            if _numcalls <= _cur_1_call:
+                self.Rot = 0
+                # Cur-1: Baseline
+                self.set_origin(self.wsapce_center)
+                self.set_target(self.wsapce_center+rand_targ_circle(0.1))
+
+            elif self._numcalls <= _cur_2_call:
+                self.Rot = np.deg2rad(30)
+                # Cur-1: purturb 
+                self.set_origin(self.wsapce_center)
+                self.set_target(self.wsapce_center+rand_targ_circle(0.1))
+
+            elif self._numcalls > _cur_2_call:
+                self.Rot = 0
+                # Cur-3: Washout
+                self.set_origin(self.wsapce_center)
+                self.set_target(self.wsapce_center+rand_targ_circle(0.1))
+
+            
         _RotMat = np.array([[np.cos(self.Rot), -np.sin(self.Rot)], [np.sin(self.Rot), np.cos(self.Rot)]])
         self.RotMat = _RotMat
         self.RotMat_stacked = np.block([[_RotMat, np.zeros_like(_RotMat)], [np.zeros_like(_RotMat), _RotMat]])
