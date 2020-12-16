@@ -165,12 +165,13 @@ class ArmModel(gym.Env):
             _center = np.array([_Origin[0], _Origin[1], 0.0, 0.0])
             _Hand = self.RotMat_stacked@(Joint2Hand(state_next, 'lower', 'pos', 'vel')-_center)+_center
             _Joint = Hand2Joint(_Hand, 'pos', 'vel')
-            if not done:
-                c = self.cost(_Joint,U) # if rotated use the cursor to get the cost
+            if c != -5:
+                c = self.cost(_Joint,U)
         else:
             _Hand = Joint2Hand(state_next, 'lower', 'pos', 'vel')
-            _Joint = state_next 
-        
+            _Joint = state_next
+
+
         self.VISION = np.concatenate((_Joint, _Hand))
         self.obs = np.concatenate((self.VISION, _Targ, _Origin, [1. if self.flag_reached else 0.]))
 
@@ -280,8 +281,8 @@ class ArmModel(gym.Env):
                 self.set_target(_origin + targ_circle(_targ_r, _theta))
 
             elif self._numcalls <= _cur_2_call:
-                #self.Rot = np.deg2rad(45)
-                self.FF = 30.0
+                self.Rot = np.deg2rad(40)
+                #self.FF = 30.0
                 # Cur-1: purturb 
                 _rampup = (_numcalls-_cur_1_call)/(_cur_2_call-_cur_1_call)
                 _origin = self.wsapce_center + np.random.uniform(-0.005, 0.005) #np.random.uniform(-0.01*_rampup, 0.01*_rampup)

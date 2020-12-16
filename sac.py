@@ -24,7 +24,7 @@ env.mode = 'train_curriculum_rand_onetarg'
 env.curriculum = [1.5E6, 3E6, 4.5E6]
 env = Monitor(env, log_dir)
 
-model = SAC(LnMlpPolicy, env, buffer_size=int(5E5), batch_size=128, gamma=0.98, learning_rate = 0.001, tau = 0.01, verbose=1)
+model = SAC(LnMlpPolicy, env, buffer_size=int(5E3), batch_size=128, gamma=0.98, learning_rate = 0.001, tau = 0.01, verbose=1)
 
 check_points = {
                 0.5E6: 'baseline',
@@ -51,7 +51,7 @@ check_points = {
                 }
 
 callback = SaveOnBestTrainingRewardCallback(check_freq=int(5E4), log_dir=log_dir, check_points=check_points)
-model.learn(total_timesteps=int(4E6), log_interval=10, callback=callback)
+model.learn(total_timesteps=int(4.5E6), log_interval=10, callback=callback)
 
 # %%
 model.save("twolink_arm_sac")
