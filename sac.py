@@ -21,7 +21,7 @@ log_dir = snap_code(log_dir_root)
 
 env = ae.ArmModel()
 env.mode = 'train_curriculum_rand_onetarg'
-env.curriculum = [1.5E6, 3E6, 4.5E6]
+env.curriculum = [2.0E6, 4.0E6, 4.5E6]
 env = Monitor(env, log_dir)
 
 model = SAC(LnMlpPolicy, env, buffer_size=int(5E3), batch_size=128, gamma=0.98, learning_rate = 0.001, tau = 0.01, verbose=1)
@@ -30,21 +30,21 @@ check_points = {
                 0.5E6: 'baseline',
                 1.0E6: 'baseline',
                 1.5E6: 'baseline',
-                1.6E6: 'adaptation',
-                1.8E6: 'adaptation',
-                2.0E6: 'adaptation',
+                1.6E6: 'baseline',
+                1.8E6: 'baseline',
+                2.0E6: 'baseline',
                 2.2E6: 'adaptation',
                 2.4E6: 'adaptation',
                 2.6E6: 'adaptation',
                 2.8E6: 'adaptation',
                 2.9E6: 'adaptation',
                 3.0E6: 'adaptation',
-                3.1E6: 'washout',
-                3.2E6: 'washout',
-                3.4E6: 'washout',
-                3.6E6: 'washout',
-                3.8E6: 'washout',
-                4.0E6: 'washout',
+                3.1E6: 'adaptation',
+                3.2E6: 'adaptation',
+                3.4E6: 'adaptation',
+                3.6E6: 'adaptation',
+                3.8E6: 'adaptation',
+                4.0E6: 'adaptation',
                 4.2E6: 'washout',
                 4.4E6: 'washout',
                 4.5E6: 'washout',

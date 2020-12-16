@@ -272,32 +272,34 @@ class ArmModel(gym.Env):
 
             if _numcalls <= _cur_1_call:
                 self.Rot = 0
+                self.FF = 0
                 # Cur-1: Baseline
                 _rampup = _numcalls/_cur_1_call
                 _origin = self.wsapce_center + np.random.uniform(-0.005, 0.005) #np.random.uniform(-0.01*_rampup, 0.01*_rampup)
                 self.set_origin(_origin)
-                _theta = np.random.randint(8)*np.pi/4 + 0.25*np.random.uniform(-0.1, +0.1) #np.random.uniform(-0.1*_rampup, +0.1*_rampup) #(_numcalls%8)*np.pi/4 + np.random.uniform(-0.1*_rampup, +0.1*_rampup) #
+                _theta = np.random.randint(8)*np.pi/4 + 0.25*np.random.uniform(-0.1, +0.1) #np.random.randint(8)*np.pi/4 + 0.25*np.random.uniform(-0.1, +0.1) #np.random.uniform(-0.1*_rampup, +0.1*_rampup) #(_numcalls%8)*np.pi/4 + np.random.uniform(-0.1*_rampup, +0.1*_rampup) #
                 _targ_r = 0.1 + np.random.uniform(-0.005, 0.005) #np.random.uniform(-0.01*_rampup, 0.01*_rampup)
                 self.set_target(_origin + targ_circle(_targ_r, _theta))
 
             elif self._numcalls <= _cur_2_call:
-                self.Rot = np.deg2rad(40)
-                #self.FF = 30.0
+                self.Rot = 0 #np.deg2rad(40)
+                self.FF = 30.0 #0 #
                 # Cur-1: purturb 
                 _rampup = (_numcalls-_cur_1_call)/(_cur_2_call-_cur_1_call)
                 _origin = self.wsapce_center + np.random.uniform(-0.005, 0.005) #np.random.uniform(-0.01*_rampup, 0.01*_rampup)
                 self.set_origin(_origin)
-                _theta = 2*np.pi/4 + 0.25*np.random.uniform(-0.1, +0.1) #np.random.uniform(-0.1*_rampup, +0.1*_rampup) #(_numcalls%8)*np.pi/4 + np.random.uniform(-0.1*_rampup, +0.1*_rampup) #
+                _theta = np.random.randint(8)*np.pi/4 + 0.25*np.random.uniform(-0.1, +0.1) #np.random.randint(8)*np.pi/4 + 0.25*np.random.uniform(-0.1, +0.1) #np.random.uniform(-0.1*_rampup, +0.1*_rampup) #(_numcalls%8)*np.pi/4 + np.random.uniform(-0.1*_rampup, +0.1*_rampup) #
                 _targ_r = 0.1 + np.random.uniform(-0.005, 0.005) #np.random.uniform(-0.01*_rampup, 0.01*_rampup)
                 self.set_target(_origin + targ_circle(_targ_r, _theta))
 
             elif self._numcalls > _cur_2_call:
                 self.Rot = 0
+                self.FF = 0
                 # Cur-3: Washout
                 _rampup = (_numcalls-_cur_2_call)/(_cur_3_call-_cur_2_call)
                 _origin = self.wsapce_center + np.random.uniform(-0.005, 0.005) #np.random.uniform(-0.01*_rampup, 0.01*_rampup)
                 self.set_origin(_origin)
-                _theta = np.random.randint(8)*np.pi/4 + 0.25*np.random.uniform(-0.1, +0.1) #np.random.uniform(-0.1*_rampup, +0.1*_rampup) #(_numcalls%8)*np.pi/4 + np.random.uniform(-0.1*_rampup, +0.1*_rampup) #
+                _theta = np.random.randint(8)*np.pi/4 + 0.25*np.random.uniform(-0.1, +0.1) #np.random.randint(8)*np.pi/4 + 0.25*np.random.uniform(-0.1, +0.1) #np.random.uniform(-0.1*_rampup, +0.1*_rampup) #(_numcalls%8)*np.pi/4 + np.random.uniform(-0.1*_rampup, +0.1*_rampup) #
                 _targ_r = 0.1 + np.random.uniform(-0.005, 0.005) #np.random.uniform(-0.01*_rampup, 0.01*_rampup)
                 self.set_target(_origin + targ_circle(_targ_r, _theta))
 
