@@ -24,7 +24,7 @@ env.mode = 'train_curriculum_rand_onetarg'
 env.curriculum = [2.0E6, 4.0E6, 4.5E6]
 env = Monitor(env, log_dir)
 
-model = SAC(LnMlpPolicy, env, buffer_size=int(5E3), batch_size=128, gamma=0.98, learning_rate = 0.001, tau = 0.01, verbose=1)
+model = SAC(LnMlpPolicy, env, buffer_size=int(1E6), batch_size=128, gamma=0.98, learning_rate = 0.001, tau = 0.01, verbose=1)
 
 check_points = {
                 0.5E6: 'baseline',
